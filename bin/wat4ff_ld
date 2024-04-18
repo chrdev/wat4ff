@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# This file is part of wat4ff.
+# 2024 github.com/chrdev
+# Zero-Clause BSD
+#
+# Inspired by github.com/dantmnf/AudioToolboxWrapper
+#
+
+WAT4FF_TRUELD=${WAT4FF_TRUELD:-gcc}
+args=()
+while (( $# > 0 ))
+do
+  if [[ "$1" == "-framework" ]] # -framework Name
+  then
+    if [[ "$2" == "AudioToolbox" ]]
+    then
+      args+=(-lwat4ff)
+    fi
+    shift # shift twice to remove -framework Name
+  else
+    args+=("$1")
+  fi
+  shift
+done
+exec "$WAT4FF_TRUELD" "${args[@]}"
