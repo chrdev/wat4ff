@@ -3,7 +3,7 @@
  * 2024 github.com/chrdev
  * Zero-Clause BSD
  * 
- * wat4ff is an AudioToolbox wrapper for FFMpeg on Windows.
+ * wat4ff is an AudioToolbox wrapper for FFmpeg on Windows.
  * With it we can use aac_at encoder and decoder.
  * 
  * This header is prepared for these 3 files:

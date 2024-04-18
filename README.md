@@ -67,7 +67,7 @@ FFB_PREFIX=${FFB_PREFIX:-/opt/ffbuild}
 cd path/to/ffmpeg
 export CFLAGS="-I${FFB_PREFIX}/include" LDFLAGS="-L${FFB_PREFIX}/lib"
 ./configure --prefix="${FFB_PREFIX}" --enable-audiotoolbox
-make LD="${FFB_PREFIX}/wat4ff_ld" -j(nproc) V=1
+make LD="${FFB_PREFIX}/wat4ff_ld" -j$(nproc) V=1
 make install
 
 # test
