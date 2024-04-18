@@ -33,14 +33,23 @@ Choose either one:
 For movies, use -q to control quality, ranging from 0 to 14, best quality to 
 smallest file.
 
-`-q 4` ~ 192 kbit/s, very high quality, recommended for most movies.  
-`-q 3` ~ 224 kbit/s, transparent, use it for opera or live.
+`-q 4` ~ 192 Kbps stereo, very high quality, recommended for most movies.  
+`-q 3` ~ 224 Kbps stereo, transparent, use it for opera or live.
+
+For low-res lectures, use `-profile:a 4 -b:a 48k` for HE-AAC at 48 Kbps.
 
 Examples
 ```
+# movie:
 ffmpeg -i input.mkv -c:a aac_at -q 4 output.mkv
 
-# To get help
+# lecture for watching on TV:
+ffmpeg -i input.mkv -c:a aac_at -profile:a 4 -b:a 64k output.mkv
+
+# lecture for listening in car:
+ffmpeg -i input.mkv -map 0:a -c:a aac_at -profile:a 4 -b:a 48k output.m4a
+
+# To get some help
 ffmpeg -h encoder=aac_at
 ```
 
