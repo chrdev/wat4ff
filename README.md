@@ -9,12 +9,11 @@ Inspired by
 
 Choose either one:
 
-* Install Apple iTunes for Windows using the installer, not the AppStore. Use
-  the same bit-version as FFmpeg.
+* Install Apple iTunes using the same-bit-as-FFmpeg installer.
 
-* Make it all portable by extracting files from iTunes.
+* Or, Make a portable folder by extracting files from iTunes.
   Like the way [qaac](https://github.com/nu774/qaac) does.  
-  On 64-bit OS, The folder structure should end up like this:
+  On 64-bit OS, The folder structure ends up like this:
 ```
   |   ffmpeg.exe
   \-- QTfiles64
@@ -28,6 +27,10 @@ Choose either one:
       |   objc.dll
 ```
 
+* Or, highly unrecommended, install iTunes from the Store. By default no other
+  software can use DLLs within the app folder. You have to manually grant
+  permissions by using something like icacls.
+  
 ## Tips
 
 For movies, use -q to control quality, ranging from 0 to 14, best quality to 
@@ -80,7 +83,7 @@ make LD="${FFB_PREFIX}/wat4ff_ld" -j$(nproc) V=1
 make install
 
 # test
-ffmpeg -f lavfi -i sine=1000 -c aac_at -f mp4 -y NUL
+ffmpeg -to 30.0 -f lavfi -i sine=1000 -c aac_at -f mp4 -y NUL
 ```
 ## License
 

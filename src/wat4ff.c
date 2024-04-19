@@ -13,6 +13,7 @@
 #include <stdbool.h>
 
 #include <windows.h>
+#include <appmodel.h>
 
 #include <AudioToolbox/AudioToolbox.h>
 
@@ -107,7 +108,7 @@ calc_app_lib_path(wchar_t* buf, wchar_t* rootp) {
 
 // Buf assumed to be kMaxPath in cch size.
 static bool
-get_itunes_lib_path(wchar_t* buf) {
+get_itunes_prog_lib_path(wchar_t* buf) {
     const wchar_t kSubKey[] = L"SOFTWARE\\Apple Computer, Inc.\\iTunes";
     const wchar_t kValName[] = L"InstallDir";
 
@@ -117,31 +118,103 @@ get_itunes_lib_path(wchar_t* buf) {
     return calc_app_lib_path(buf, buf + sz);
 }
 
+static wchar_t*
+gen_app_full_name(const wchar_t* family_name) {
+    wchar_t* rlt = NULL;
+    UINT32 count = 0;
+    UINT32 buf_len = 0;
+    wchar_t* buf = NULL;
+    wchar_t** full_names = NULL;
+
+    LONG rc = FindPackagesByPackageFamily(
+        family_name, PACKAGE_FILTER_HEAD,
+        &count, NULL, &buf_len, NULL, NULL
+    );
+    // If Not found, rc == 0
+    if (rc != ERROR_INSUFFICIENT_BUFFER) return false;
+
+    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(*buf) * buf_len);
+    if (!buf) goto fin;
+    full_names = HeapAlloc(GetProcessHeap(), 0, sizeof(*full_names) * count);
+    if (!full_names) goto fin;
+
+    rc = FindPackagesByPackageFamily(
+        family_name, PACKAGE_FILTER_HEAD,
+        &count, full_names, &buf_len, buf, NULL
+    );
+    if (rc) goto fin;
+
+    rlt = buf;
+
+fin:
+    if (!rlt && buf) HeapFree(GetProcessHeap(), 0, buf);
+    if (full_names) HeapFree(GetProcessHeap(), 0, full_names);
+    return rlt;
+}
+
+// Buf assumed to be kMaxPath in cch size.
+static bool
+get_app_dir_by_full_name(wchar_t* buf, wchar_t** rootp, const wchar_t* full_name) {
+    UINT32 cch = 0;
+    LONG rc = GetPackagePathByFullName(full_name, &cch, NULL);
+    if (rc != ERROR_INSUFFICIENT_BUFFER) return false;
+    if (cch >= kMaxPath - 1) return false; // We'll add trailing backslash, so kMaxPath - 1
+    
+    rc = GetPackagePathByFullName(full_name, &cch, buf);
+    if (rc) return false;
+
+    buf[cch - 1] = L'\\';
+    buf[cch]   = L'\0';
+    *rootp = buf + cch;
+
+    return true;
+}
+
+// Buf assumed to be kMaxPath in cch size.
+static bool
+get_app_dir_by_family_name(wchar_t* buf, wchar_t** rootp, const wchar_t* family_name) {
+    wchar_t* full_name = gen_app_full_name(family_name);
+    if (!full_name) return false;
+
+    bool rlt = get_app_dir_by_full_name(buf, rootp, full_name);
+    HeapFree(GetProcessHeap(), 0, full_name);
+    return rlt;
+}
+
+// Buf assumed to be kMaxPath in cch size.
+static bool
+get_itunes_app_lib_path(wchar_t* buf) {
+    const wchar_t kFamilyName[] = L"AppleInc.iTunes_nzyj5cx40ttqa";
+
+    wchar_t* rootp;
+    bool ok = get_app_dir_by_family_name(buf, &rootp, kFamilyName);
+    if (!ok) return false;
+
+    return calc_app_lib_path(buf, rootp);
+}
+
 static HMODULE
 load_lib(void) {
-    enum { kLLFlags = LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32 };
-
+    enum { kLLFlags = LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_IGNORE_CODE_AUTHZ_LEVEL};
     wchar_t* path = HeapAlloc(GetProcessHeap(), 0, sizeof(wchar_t) * kMaxPath);
     if (!path) return NULL;
 
     HMODULE lib = NULL;
 
-    bool ok = get_portable_lib_path(path);
-    if (ok) {
-        lib = LoadLibraryExW(path, NULL, kLLFlags);
-        if (lib) goto fin;
+    if (get_portable_lib_path(path)) {
+        if (lib = LoadLibraryExW(path, NULL, kLLFlags)) goto fin;
     }
-
-    ok = get_itunes_lib_path(path);
-    if (ok) {
-        lib = LoadLibraryExW(path, NULL, kLLFlags);
+    if (get_itunes_prog_lib_path(path)) {
+        if (lib = LoadLibraryExW(path, NULL, kLLFlags)) goto fin;
+    }
+    if (get_itunes_app_lib_path(path)) {
+        if (lib = LoadLibraryExW(path, NULL, kLLFlags)) goto fin;
     }
 
 fin:
     HeapFree(GetProcessHeap(), 0, path);
     return lib;
 }
-
 
 // Shared by dec, enc +++
 
