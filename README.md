@@ -1,19 +1,19 @@
 # WAT4FF
 
-A library for FFmpeg to harness AudioToolbox codecs on Windows.
+A library for FFmpeg to use AudioToolbox on Windows.
 
 Inspired by 
 [AudioToolboxWrapper](https://github.com/dantmnf/AudioToolboxWrapper)
 
-## Setup
+## Installation
 
-Choose either one:
+Choose either one of the three:
 
-* Install Apple iTunes using the same-bit-as-FFmpeg installer.
+* Install Apple iTunes using the official installer. No further steps needed.
 
-* Or, Make a portable folder by extracting files from iTunes.
-  Like the way [qaac](https://github.com/nu774/qaac) does.  
-  On 64-bit OS, The folder structure ends up like this:
+* Extract files from iTunes. Same as
+  [QTFiles for qaac](https://github.com/AnimMouse/QTFiles)  
+  On x64 OS, The folder tree looks like this:
 ```
   |   ffmpeg.exe
   \-- QTfiles64
@@ -27,17 +27,17 @@ Choose either one:
       |   objc.dll
 ```
 
-* Or, highly unrecommended, install iTunes from the Store. By default no other
-  software can use DLLs within the app folder. You have to manually grant
-  permissions by using something like icacls.
+* Highly unrecommended, install iTunes from the Store. By default 3rd party
+  software cannot load DLLs reside in the app folder. You have to manually set
+  permissions by using something like icacls. This method cripples the system!
+  Only builds with WAT4FF_USE_APPMODEL explicitly defined support this method.
   
 ## Tips
 
-For movies, use -q to control quality, ranging from 0 to 14, best quality to 
-smallest file.
-
-`-q 4` ~ 192 Kbps stereo, very high quality, recommended for most movies.  
-`-q 3` ~ 224 Kbps stereo, transparent, use it for opera or live.
+`-q 0` gives the best quality, and `-q 14` gives the smallest file.  
+Some useful parameters are:  
+`-q 4` gives ~192 Kbps stereo, very high quality, recommended for movies.  
+`-q 3` gives ~224 Kbps stereo, transparent, use it for opera, live, etc.
 
 For low-res lectures, use `-profile:a 4 -b:a 48k` for HE-AAC at 48 Kbps.
 

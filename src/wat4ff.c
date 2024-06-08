@@ -4,7 +4,7 @@
  * Zero-Clause BSD
  *
  * wat4ff is an AudioToolbox wrapper for FFmpeg on Windows.
- * With it we can use aac_at encoder and decoder.
+ * Support aac_at encoder and decoder.
  * 
  * Inspired by github.com/dantmnf/AudioToolboxWrapper
 */
@@ -13,7 +13,9 @@
 #include <stdbool.h>
 
 #include <windows.h>
+#ifdef WAT4FF_USE_APPMODEL
 #include <appmodel.h>
+#endif
 
 #include <AudioToolbox/AudioToolbox.h>
 
@@ -118,8 +120,9 @@ get_itunes_prog_lib_path(wchar_t* buf) {
     return calc_app_lib_path(buf, buf + sz);
 }
 
+#ifdef WAT4FF_USE_APPMODEL
 static wchar_t*
-gen_app_full_name(const wchar_t* family_name) {
+gen_wapp_full_name(const wchar_t* family_name) {
     wchar_t* rlt = NULL;
     UINT32 count = 0;
     UINT32 buf_len = 0;
@@ -154,7 +157,7 @@ fin:
 
 // Buf assumed to be kMaxPath in cch size.
 static bool
-get_app_dir_by_full_name(wchar_t* buf, wchar_t** rootp, const wchar_t* full_name) {
+get_wapp_dir_by_full_name(wchar_t* buf, wchar_t** rootp, const wchar_t* full_name) {
     UINT32 cch = 0;
     LONG rc = GetPackagePathByFullName(full_name, &cch, NULL);
     if (rc != ERROR_INSUFFICIENT_BUFFER) return false;
@@ -172,11 +175,11 @@ get_app_dir_by_full_name(wchar_t* buf, wchar_t** rootp, const wchar_t* full_name
 
 // Buf assumed to be kMaxPath in cch size.
 static bool
-get_app_dir_by_family_name(wchar_t* buf, wchar_t** rootp, const wchar_t* family_name) {
-    wchar_t* full_name = gen_app_full_name(family_name);
+get_wapp_dir_by_family_name(wchar_t* buf, wchar_t** rootp, const wchar_t* family_name) {
+    wchar_t* full_name = gen_wapp_full_name(family_name);
     if (!full_name) return false;
 
-    bool rlt = get_app_dir_by_full_name(buf, rootp, full_name);
+    bool rlt = get_wapp_dir_by_full_name(buf, rootp, full_name);
     HeapFree(GetProcessHeap(), 0, full_name);
     return rlt;
 }
@@ -187,11 +190,12 @@ get_itunes_app_lib_path(wchar_t* buf) {
     const wchar_t kFamilyName[] = L"AppleInc.iTunes_nzyj5cx40ttqa";
 
     wchar_t* rootp;
-    bool ok = get_app_dir_by_family_name(buf, &rootp, kFamilyName);
+    bool ok = get_wapp_dir_by_family_name(buf, &rootp, kFamilyName);
     if (!ok) return false;
 
     return calc_app_lib_path(buf, rootp);
 }
+#endif //#ifdef WAT4FF_USE_APPMODEL
 
 static HMODULE
 load_lib(void) {
@@ -207,9 +211,11 @@ load_lib(void) {
     if (get_itunes_prog_lib_path(path)) {
         if (lib = LoadLibraryExW(path, NULL, kLLFlags)) goto fin;
     }
+#ifdef WAT4FF_USE_APPMODEL
     if (get_itunes_app_lib_path(path)) {
         if (lib = LoadLibraryExW(path, NULL, kLLFlags)) goto fin;
     }
+#endif
 
 fin:
     HeapFree(GetProcessHeap(), 0, path);
